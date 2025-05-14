@@ -1,26 +1,26 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React from "react";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import LoginForm from "./components/LoginForm";
+import Home from "./components/main/Home";
+import Navbar from "./components/navbar/Navbar";
+import Footer from "./components/footer/Footer";
+import Register from "./components/main/Register";
+import Users from "./components/main/Users"; // เพิ่มการนำเข้า Users component
 
-function App() {
+const App: React.FC = () => {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <Navbar />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<LoginForm />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/users" element={<Users />} />{" "}
+        {/* เพิ่มเส้นทางสำหรับ Users */}
+      </Routes>
+      <Footer />
+    </Router>
   );
-}
+};
 
 export default App;
