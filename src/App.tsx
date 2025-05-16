@@ -5,7 +5,8 @@ import Home from "./components/main/Home";
 import Navbar from "./components/navbar/Navbar";
 import Footer from "./components/footer/Footer";
 import Register from "./components/main/Register";
-import Users from "./components/main/Users"; // เพิ่มการนำเข้า Users component
+import Users from "./components/main/Users";
+import Unauthorized from "./components/main/Unauthorized";
 
 const App: React.FC = () => {
   return (
@@ -16,7 +17,7 @@ const App: React.FC = () => {
         <Route path="/login" element={<LoginForm />} />
         <Route path="/register" element={<Register />} />
         <Route path="/users" element={<Users />} />{" "}
-        {/* เพิ่มเส้นทางสำหรับ Users */}
+        <Route path="/unauthorized" element={<Unauthorized />} />
       </Routes>
       <Footer />
     </Router>

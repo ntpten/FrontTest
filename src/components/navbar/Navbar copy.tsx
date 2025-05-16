@@ -1,30 +1,85 @@
 import React, { useState, useEffect } from "react";
-import { AppBar, Toolbar, Typography, Button, Box } from "@mui/material";
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Button,
+  Box,
+  CircularProgress,
+} from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+
+interface User {
+  users_id: number;
+  username: string;
+  password: string;
+  roles_id: number; // `roles_id` ควรเป็น number
+  roles_name: string;
+}
 
 const Navbar: React.FC = () => {
-  const [user, setUser] = useState<any | null>(null); // เก็บค่า user จาก localStorage
-  const navigate = useNavigate();
+  const [user, setUser] = useState<User | null>(null);
+  const [loggingOut, setLoggingOut] = useState<boolean>(false); // ✅ เพิ่ม
+  const navigate = useNavigate(); // ใช้ navigate สำหรับการเปลี่ยนเส้นทาง
 
-  // ตรวจสอบข้อมูล user เมื่อ component ถูก mount
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
 
-    if (storedUser) {
+    if (storedUser && storedUser !== "undefined") {
       try {
-        setUser(JSON.parse(storedUser)); // ตั้งค่า user จาก localStorage
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser); // ตั้งค่า user จาก localStorage
       } catch (error) {
         console.error("Error parsing user data from localStorage", error);
-        setUser(null); // ถ้า parsing ล้มเหลว, ตั้งค่า user เป็น null
+        setUser(null);
+        navigate("/login"); // ถ้าเกิดข้อผิดพลาดในการดึงข้อมูล user จาก localStorage ให้ redirect ไปที่ login
       }
+    } else {
+      setUser(null);
+      navigate("/login"); // ถ้าไม่มีข้อมูล user ให้ redirect ไปที่ login
     }
-  }, []);
+  }, [navigate]); // ให้ run แค่ครั้งเดียวเมื่อ component ถูก mount
 
-  const handleLogout = () => {
-    localStorage.removeItem("user"); // ลบข้อมูล user ออกจาก localStorage
-    setUser(null); // อัปเดต state user ให้เป็น null
-    navigate("/login"); // เปลี่ยนเส้นทางไปหน้า login
+  const handleLogout = async () => {
+    setLoggingOut(true); // เริ่มแสดง loading
+    try {
+      await axios.get("http://localhost:3001/logout", {
+        withCredentials: true,
+      });
+      localStorage.removeItem("user");
+      setUser(null);
+
+      // หน่วงเวลาให้การ logout เสร็จสมบูรณ์ก่อน
+      setTimeout(() => {
+        navigate("/login"); // ไปที่หน้า login
+      }, 3000); // หน่วงเวลา 3 วินาทีเพื่อให้การ logout เสร็จสมบูรณ์
+    } catch (error) {
+      console.error("Logout failed:", error);
+      setLoggingOut(false); // หยุดโหลดหาก error
+      navigate("/login"); // หาก logout ไม่สำเร็จ ให้ redirect ไปที่ login
+    }
   };
+
+  // กรณีที่ออกจากระบบหรือเกิดข้อผิดพลาด จะถูกแสดง loading
+  if (loggingOut) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+          flexDirection: "column",
+        }}
+      >
+        <CircularProgress />
+        <Typography variant="h6" sx={{ mt: 2 }}>
+          กำลังออกจากระบบ...
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <AppBar position="static">
@@ -33,7 +88,7 @@ const Navbar: React.FC = () => {
           My Application
         </Typography>
         <Box>
-          {!user ? ( // ถ้ายังไม่ได้ล็อกอิน
+          {!user ? (
             <>
               <Button color="inherit" component={Link} to="/login">
                 Login
@@ -43,11 +98,22 @@ const Navbar: React.FC = () => {
               </Button>
             </>
           ) : (
-            // ถ้าล็อกอินแล้ว
             <>
               <Button color="inherit" component={Link} to="/">
                 Home
               </Button>
+              {/* ปุ่ม Users จะแสดงเมื่อ roles_id เป็น 1 */}
+              {user?.roles_id === 1 && (
+                <Button color="inherit" component={Link} to="/users">
+                  Users
+                </Button>
+              )}
+              {/* ปุ่ม About จะแสดงเมื่อ roles_id เป็น 1 หรือ 2 */}
+              {(user?.roles_id === 1 || user?.roles_id === 3) && (
+                <Button color="inherit" component={Link} to="/about">
+                  About
+                </Button>
+              )}
               <Button color="inherit" onClick={handleLogout}>
                 Logout
               </Button>

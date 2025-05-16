@@ -7,9 +7,9 @@ import {
   CardContent,
   CardActions,
   Button,
-  CircularProgress, // ✅ เพิ่ม
+  CircularProgress,
 } from "@mui/material";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom"; // นำเข้า useNavigate
 import axios from "axios";
 
 const Home = () => {
@@ -18,6 +18,7 @@ const Home = () => {
   const [user, setUser] = useState<any | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [loggingOut, setLoggingOut] = useState<boolean>(false); // ✅ เพิ่ม
+  const navigate = useNavigate(); // ใช้ useNavigate เพื่อใช้ฟังก์ชัน navigate
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -28,27 +29,40 @@ const Home = () => {
         setUser(parsedUser);
         setMessage("Welcome back!");
 
-        axios
-          .get("http://localhost:3001/", { withCredentials: true })
-          .then((response) => {
+        const fetchData = async () => {
+          try {
+            // รอให้ข้อมูลจาก backend มาเสร็จสมบูรณ์ก่อนแสดง
+            const response = await axios.get("http://localhost:3001/", {
+              withCredentials: true,
+            });
+
             if (response.data.activities) {
               setActivities(response.data.activities);
             }
-          })
-          .catch((error) => console.error("Error fetching activities:", error));
+            setLoading(false); // ตั้งให้โหลดเสร็จเมื่อได้ข้อมูลจาก backend
+          } catch (error) {
+            console.error("Error fetching activities:", error);
+            setLoading(false); // หยุดการโหลดหากมีข้อผิดพลาด
+            navigate("/login"); // หากเกิดข้อผิดพลาด, เปลี่ยนเส้นทางไปที่ login
+          }
+        };
+
+        fetchData(); // เรียกใช้ fetchData ใน useEffect
       } catch (error) {
         console.error("Error parsing user data from localStorage", error);
         localStorage.removeItem("user");
         setUser(null);
         setMessage("Please log in");
+        setLoading(false); // ปิดสถานะ loading
+        navigate("/login"); // หากเกิดข้อผิดพลาด, เปลี่ยนเส้นทางไปที่ login
       }
     } else {
       setUser(null);
       setMessage("Please log in");
+      setLoading(false); // ปิดสถานะ loading หากไม่พบข้อมูลผู้ใช้
+      navigate("/login"); // หากไม่มีข้อมูลผู้ใช้, เปลี่ยนเส้นทางไปที่ login
     }
-
-    setLoading(false);
-  }, []);
+  }, [navigate]); // เพิ่ม `navigate` เป็น dependency ของ useEffect
 
   // 🔃 แสดงระหว่างกำลัง logout
   if (loggingOut) {
@@ -86,7 +100,7 @@ const Home = () => {
   }
 
   if (!user) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/login" />; // หากไม่มี user ให้ redirect ไปที่ login
   }
 
   const handleLogout = async () => {
@@ -100,12 +114,12 @@ const Home = () => {
 
       // หน่วงเวลาให้การ logout เสร็จสมบูรณ์ก่อน
       setTimeout(() => {
-        window.location.href = "/login"; // ไปที่หน้า login
-        window.location.reload(); // รีเฟรชหน้า
-      }, 100); // ลดเวลาเป็น 100ms เพื่อให้การ redirect เสร็จก่อนที่หน้ารีเฟรช
+        navigate("/login"); // ไปที่หน้า login
+      }, 3000); // หน่วงเวลา 3 วินาทีเพื่อให้การ logout เสร็จสมบูรณ์
     } catch (error) {
       console.error("Logout failed:", error);
       setLoggingOut(false); // หยุดโหลดหาก error
+      navigate("/login"); // หาก logout ไม่สำเร็จ ให้ redirect ไปที่ login
     }
   };
 

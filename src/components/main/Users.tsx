@@ -11,33 +11,113 @@ import {
   TableRow,
   Button,
 } from "@mui/material";
-import axios from "axios";
-import { Navigate } from "react-router-dom"; // นำเข้า Navigate
+import axios, { AxiosError } from "axios";
+import { Navigate, useNavigate } from "react-router-dom"; // นำเข้า useNavigate
+
+interface User {
+  users_id: number;
+  username: string;
+  password: string;
+  roles_id: number; // `roles_id` ควรเป็น number
+  roles_name: string;
+}
 
 const Users: React.FC = () => {
+  // ประกาศฟังก์ชัน handleLogout ที่นี่
+  const handleLogout = async () => {
+    setLoggingOut(true); // เริ่มแสดง loading
+    try {
+      await axios.get("http://localhost:3001/logout", {
+        withCredentials: true,
+      });
+      localStorage.removeItem("user");
+      setUserLocalStorage(null);
+
+      // หน่วงเวลาให้การ logout เสร็จสมบูรณ์ก่อน
+      setTimeout(() => {
+        window.location.href = "/login"; // ไปที่หน้า login
+
+        // รอ 3 วินาทีแล้วทำการรีเฟรชหน้า /login
+        setTimeout(() => {
+          window.location.reload(); // รีเฟรชหน้า
+        }, 1000); // รอ 3 วินาทีหลังจากไปที่หน้า /login
+      }, 3000); // ลดเวลาเป็น 2 วินาที เพื่อให้การ logout เสร็จสมบูรณ์
+    } catch (error) {
+      console.error("Logout failed:", error);
+      setLoggingOut(false); // หยุดโหลดหาก error
+    }
+  };
+
   const [usersData, setUsersData] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
-  const [redirectToLogin, setRedirectToLogin] = useState<boolean>(false); // ใช้ state สำหรับการ redirect
+  const [redirectToLogin, setRedirectToLogin] = useState<boolean>(false);
+  const [userLocalStorage, setUserLocalStorage] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+
+  const [message, setMessage] = useState<string>("");
+  const [loggingOut, setLoggingOut] = useState<boolean>(false); // ✅ เพิ่ม
+
+  const navigate = useNavigate(); // ใช้ useNavigate เพื่อใช้ฟังก์ชัน navigate
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
 
-    if (!storedUser) {
-      setRedirectToLogin(true); // ถ้าไม่มีผู้ใช้ใน localStorage, set ค่า redirect
-      return;
-    }
+    if (storedUser && storedUser !== "undefined" && storedUser !== "null") {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setUserLocalStorage(parsedUser);
+        setMessage("Welcome back!");
 
-    axios
-      .get("http://localhost:3001/users", { withCredentials: true })
-      .then((response) => {
-        setUsersData(response.data.usersData);
+        const fetchData = async () => {
+          try {
+            const response = await axios.get("http://localhost:3001/users", {
+              withCredentials: true,
+            });
+
+            if (response.status === 200) {
+              if (response.data.user === null) {
+                // setRedirectToLogin(true);
+                handleLogout();
+              } else {
+                setUsersData(response.data.usersData);
+                setUser(response.data.rolesUser);
+                setLoading(false);
+              }
+            } else {
+              handleLogout();
+            }
+          } catch (error: any) {
+            console.error("Error fetching Users Information:", error);
+            setError(
+              error.response?.data?.message ||
+                "Error fetching Users Information"
+            );
+            navigate("/unauthorized");
+
+            setLoading(false);
+
+            // ตรวจสอบข้อผิดพลาดเป็น AxiosError
+            if ((error as AxiosError).response?.status === 401) {
+              navigate("/unauthorized");
+              handleLogout();
+            }
+          }
+        };
+
+        fetchData();
+      } catch (error) {
+        console.error("Error parsing user data from localStorage", error);
+        localStorage.removeItem("user");
+        setUserLocalStorage(null);
+        setMessage("Please log in");
         setLoading(false);
-      })
-      .catch((error) => {
-        setError("Error fetching user data.");
-        setLoading(false);
-      });
+      }
+    } else {
+      setUserLocalStorage(null);
+      setMessage("Please log in");
+      setLoading(false);
+    }
   }, []);
 
   // ถ้า redirectToLogin เป็น true, ให้ redirect ไปที่ /login
@@ -53,9 +133,11 @@ const Users: React.FC = () => {
           justifyContent: "center",
           alignItems: "center",
           height: "100vh",
+          flexDirection: "column", // จัดเรียงเป็นคอลัมน์
         }}
       >
-        <CircularProgress />
+        <CircularProgress sx={{ mb: 2 }} /> {/* เพิ่ม margin ด้านล่าง */}
+        <Typography variant="h5">กำลังตรวจสอบสิทธิ์การใช้งาน...</Typography>
       </Box>
     );
   }
@@ -68,6 +150,31 @@ const Users: React.FC = () => {
         </Typography>
       </Container>
     );
+  }
+
+  if (loggingOut) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+          flexDirection: "column",
+        }}
+      >
+        <CircularProgress />
+        <Typography variant="h6" sx={{ mt: 2 }}>
+          กำลังออกจากระบบ...
+        </Typography>
+      </Box>
+    );
+  }
+
+  console.log(user);
+  console.log("front USER ID", userLocalStorage?.roles_id);
+  if (!userLocalStorage) {
+    return <Navigate to="/login" />;
   }
 
   return (

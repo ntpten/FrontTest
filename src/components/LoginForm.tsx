@@ -21,45 +21,36 @@ const LoginForm = () => {
   const navigate = useNavigate();
 
   // ใช้ useEffect เพื่อเปลี่ยนเส้นทางหลังจาก user ถูกตั้งค่าเสร็จ
-  useEffect(() => {
-    if (user) {
-      console.log("Login successful, navigating to /");
-      navigate("/"); // เปลี่ยนเส้นทางไปยังหน้า Home
-    }
-  }, [user, navigate]); // เมื่อ user ถูกตั้งค่า, ใช้ useEffect เพื่อไปยังหน้า Home
-
   const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
-    setLoading(true);
+    setLoading(true); // เริ่มแสดง loading
     setError(""); // เคลียร์ error เดิม
 
     try {
       console.log("Attempting login with username:", username);
+
+      // รอให้คำตอบจาก backend ก่อนทำการตั้งค่าผลลัพธ์
       const response = await axios.post(
         "http://localhost:3001/login",
         { username, password },
-        { withCredentials: true } // แน่ใจว่า credentials ถูกส่งไป
+        { withCredentials: true }
       );
 
       console.log("Response from server:", response); // Log ข้อมูลที่ได้รับจาก server
 
       if (response.status === 200 && response.data.user) {
-        localStorage.setItem("user", JSON.stringify(response.data.user));
-        setUser(response.data.user); // Set user state after login
-        setMessage(response.data.message);
-
-        console.log("Login successful, navigating to /");
-
-        // ทำการเปลี่ยนเส้นทางทันทีหลังจากที่ setUser ถูกตั้งค่า
-        navigate("/"); // เปลี่ยนเส้นทางไปยังหน้า Home
+        // หน่วงเวลาให้การตอบกลับเสร็จสมบูรณ์
         setTimeout(() => {
-          window.location.reload(); // รีเฟรชหน้า Home
-          console.log("setTimeout response.data.user :", response.data.user); // Set user state after login
-          console.log(
-            "setTimeout response.data.message :",
-            response.data.message
-          ); // Set user state after login
-        }, 1000); // หน่วงเวลา 3 วินาที
+          localStorage.setItem("user", JSON.stringify(response.data.user));
+          setUser(response.data.user); // Set user state after login
+          setMessage(response.data.message);
+
+          console.log("Login successful, navigating to /");
+
+          // setTimeout(() => {
+          //   window.location.reload();
+          // }, 3000);
+        }, 2000); // หน่วงเวลา 2 วินาทีก่อนทำการเปลี่ยนเส้นทาง
       } else {
         setUser(response.data.user); // Set user state after login
         setMessage(response.data.message);
@@ -78,10 +69,23 @@ const LoginForm = () => {
         );
       }
     } finally {
-      setLoading(false);
+      setLoading(false); // ปิดสถานะ loading เมื่อการ login เสร็จสิ้น
     }
   };
 
+  // เมื่อ `user` ถูกตั้งค่า, ให้ทำการเปลี่ยนเส้นทางไปหน้า Home
+  console.log("1. user:", user);
+  useEffect(() => {
+    if (user) {
+      console.log("Login successful, navigating to /");
+      navigate("/"); // เปลี่ยนเส้นทางไปยังหน้า Home
+
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    }
+  }, [user, navigate]); // เมื่อ `user` ถูกตั้งค่า, เปลี่ยนเส้นทางไปหน้า Home
+  console.log("2. user:", user);
   return (
     <Container component="main" maxWidth="xs">
       <Box
