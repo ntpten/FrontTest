@@ -52,12 +52,18 @@ const Navbar: React.FC = () => {
 
       // หน่วงเวลาให้การ logout เสร็จสมบูรณ์ก่อน
       setTimeout(() => {
-        navigate("/login"); // ไปที่หน้า login
-      }, 3000); // หน่วงเวลา 3 วินาทีเพื่อให้การ logout เสร็จสมบูรณ์
+        navigate("/login");
+
+        // รอ 1 วินาทีหลังจากไปที่หน้า /login
+        setTimeout(() => {
+          window.location.reload(); // รีเฟรชหน้า
+          setLoggingOut(false); // รีเซ็ตสถานะการล็อกเอาท์เป็น false หลังจากรีเฟรชหน้าแล้ว
+        }, 300); // รอ 1 วินาทีหลังจากไปที่หน้า /login
+      }, 3000); // ลดเวลาเป็น 3 วินาที เพื่อให้การ logout เสร็จสมบูรณ์
     } catch (error) {
       console.error("Logout failed:", error);
-      setLoggingOut(false); // หยุดโหลดหาก error
-      navigate("/login"); // หาก logout ไม่สำเร็จ ให้ redirect ไปที่ login
+      setLoggingOut(false);
+      navigate("/login");
     }
   };
 
@@ -102,12 +108,19 @@ const Navbar: React.FC = () => {
               <Button color="inherit" component={Link} to="/">
                 Home
               </Button>
+
               {/* ปุ่ม Users จะแสดงเมื่อ roles_id เป็น 1 */}
               {user?.roles_id === 1 && (
-                <Button color="inherit" component={Link} to="/users">
-                  Users
-                </Button>
+                <>
+                  <Button color="inherit" component={Link} to="/users">
+                    Users
+                  </Button>
+                  <Button color="inherit" component={Link} to="/faculty">
+                    Faculty
+                  </Button>
+                </>
               )}
+
               {/* ปุ่ม About จะแสดงเมื่อ roles_id เป็น 1 หรือ 2 */}
               {(user?.roles_id === 1 || user?.roles_id === 3) && (
                 <Button color="inherit" component={Link} to="/about">

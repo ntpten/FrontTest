@@ -22,7 +22,12 @@ interface User {
   roles_name: string;
 }
 
-const Users: React.FC = () => {
+interface Facultys {
+  faculty_id: number;
+  faculty_name: string;
+}
+
+const Faculty: React.FC = () => {
   // ประกาศฟังก์ชัน handleLogout ที่นี่
   const handleLogout = async () => {
     setLoggingOut(true); // เริ่มแสดง loading
@@ -41,22 +46,22 @@ const Users: React.FC = () => {
         setTimeout(() => {
           window.location.reload(); // รีเฟรชหน้า
         }, 1000); // รอ 3 วินาทีหลังจากไปที่หน้า /login
-      }, 5000); // ลดเวลาเป็น 2 วินาที เพื่อให้การ logout เสร็จสมบูรณ์
+      }, 3000); // ลดเวลาเป็น 2 วินาที เพื่อให้การ logout เสร็จสมบูรณ์
     } catch (error) {
       console.error("Logout failed:", error);
       setLoggingOut(false); // หยุดโหลดหาก error
     }
   };
 
-  const [usersData, setUsersData] = useState<any[]>([]);
+  const [facultyData, setFacultyData] = useState<Facultys[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
   const [redirectToLogin, setRedirectToLogin] = useState<boolean>(false);
   const [userLocalStorage, setUserLocalStorage] = useState<User | null>(null);
   const [user, setUser] = useState<User | null>(null);
 
-  const [page, setPage] = useState<string>("");
   const [notification, setNotification] = useState<string>("");
+  const [page, setPage] = useState<string>("");
   const [loggingOut, setLoggingOut] = useState<boolean>(false); // ✅ เพิ่ม
 
   const navigate = useNavigate(); // ใช้ useNavigate เพื่อใช้ฟังก์ชัน navigate
@@ -68,11 +73,15 @@ const Users: React.FC = () => {
       try {
         const parsedUser = JSON.parse(storedUser);
         setUserLocalStorage(parsedUser);
+
         const fetchData = async () => {
           try {
-            const response = await axios.get("http://localhost:3001/users", {
-              withCredentials: true,
-            });
+            const response = await axios.get(
+              "http://localhost:3001/faculty/data",
+              {
+                withCredentials: true,
+              }
+            );
 
             if (response.status === 200) {
               if (response.data.user === null) {
@@ -80,7 +89,7 @@ const Users: React.FC = () => {
                 handleLogout();
               } else {
                 setPage(response.data.page);
-                setUsersData(response.data.usersData);
+                setFacultyData(response.data.facultyData);
                 setNotification(response.data.notification);
                 setLoading(false);
               }
@@ -170,6 +179,7 @@ const Users: React.FC = () => {
       </Box>
     );
   }
+
   if (!userLocalStorage) {
     return <Navigate to="/login" />;
   }
@@ -183,16 +193,16 @@ const Users: React.FC = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Username</TableCell>
-              <TableCell>Role</TableCell>
+              <TableCell>#</TableCell>
+              <TableCell>Faculty Name</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {usersData.map((user, index) => (
+            {facultyData.map((faculty, index) => (
               <TableRow key={index}>
-                <TableCell>{user.username}</TableCell>
-                <TableCell>{user.roles_name}</TableCell>
+                <TableCell>{faculty.faculty_id}</TableCell>
+                <TableCell>{faculty.faculty_name}</TableCell>
                 <TableCell>
                   <Button variant="outlined" color="primary">
                     View
@@ -207,4 +217,4 @@ const Users: React.FC = () => {
   );
 };
 
-export default Users;
+export default Faculty;

@@ -73,8 +73,6 @@ const LoginForm = () => {
     }
   };
 
-  // เมื่อ `user` ถูกตั้งค่า, ให้ทำการเปลี่ยนเส้นทางไปหน้า Home
-  console.log("1. user:", user);
   useEffect(() => {
     if (user) {
       console.log("Login successful, navigating to /");
@@ -85,7 +83,6 @@ const LoginForm = () => {
       }, 1000);
     }
   }, [user, navigate]); // เมื่อ `user` ถูกตั้งค่า, เปลี่ยนเส้นทางไปหน้า Home
-  console.log("2. user:", user);
   return (
     <Container component="main" maxWidth="xs">
       <Box

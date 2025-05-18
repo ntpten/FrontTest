@@ -7,6 +7,7 @@ import Footer from "./components/footer/Footer";
 import Register from "./components/main/Register";
 import Users from "./components/main/Users";
 import Unauthorized from "./components/main/Unauthorized";
+import Faculty from "./components/main/Faculty";
 
 const App: React.FC = () => {
   return (
@@ -18,6 +19,7 @@ const App: React.FC = () => {
         <Route path="/register" element={<Register />} />
         <Route path="/users" element={<Users />} />{" "}
         <Route path="/unauthorized" element={<Unauthorized />} />
+        <Route path="/faculty" element={<Faculty/>} />
       </Routes>
       <Footer />
     </Router>

@@ -46,7 +46,7 @@ const Register: React.FC = () => {
         setMessage("ลงทะเบียนสำเร็จ! กำลังเปลี่ยนไปยังหน้าล็อกอิน...");
         setTimeout(() => {
           navigate("/login");
-        }, 5000);
+        }, 2000);
       }
     } catch (error: any) {
       if (error.response) {
