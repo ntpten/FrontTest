@@ -41,7 +41,7 @@ const Users: React.FC = () => {
         setTimeout(() => {
           window.location.reload(); // รีเฟรชหน้า
         }, 1000); // รอ 3 วินาทีหลังจากไปที่หน้า /login
-      }, 3000); // ลดเวลาเป็น 2 วินาที เพื่อให้การ logout เสร็จสมบูรณ์
+      }, 5000); // ลดเวลาเป็น 2 วินาที เพื่อให้การ logout เสร็จสมบูรณ์
     } catch (error) {
       console.error("Logout failed:", error);
       setLoggingOut(false); // หยุดโหลดหาก error
@@ -55,7 +55,8 @@ const Users: React.FC = () => {
   const [userLocalStorage, setUserLocalStorage] = useState<User | null>(null);
   const [user, setUser] = useState<User | null>(null);
 
-  const [message, setMessage] = useState<string>("");
+  const [page, setPage] = useState<string>("");
+  const [notification, setNotification] = useState<string>("");
   const [loggingOut, setLoggingOut] = useState<boolean>(false); // ✅ เพิ่ม
 
   const navigate = useNavigate(); // ใช้ useNavigate เพื่อใช้ฟังก์ชัน navigate
@@ -67,8 +68,6 @@ const Users: React.FC = () => {
       try {
         const parsedUser = JSON.parse(storedUser);
         setUserLocalStorage(parsedUser);
-        setMessage("Welcome back!");
-
         const fetchData = async () => {
           try {
             const response = await axios.get("http://localhost:3001/users", {
@@ -80,8 +79,9 @@ const Users: React.FC = () => {
                 // setRedirectToLogin(true);
                 handleLogout();
               } else {
+                setPage(response.data.page);
                 setUsersData(response.data.usersData);
-                setUser(response.data.rolesUser);
+                setNotification(response.data.notification);
                 setLoading(false);
               }
             } else {
@@ -90,7 +90,7 @@ const Users: React.FC = () => {
           } catch (error: any) {
             console.error("Error fetching Users Information:", error);
             setError(
-              error.response?.data?.message ||
+              error.response?.data?.notification ||
                 "Error fetching Users Information"
             );
             navigate("/unauthorized");
@@ -110,12 +110,12 @@ const Users: React.FC = () => {
         console.error("Error parsing user data from localStorage", error);
         localStorage.removeItem("user");
         setUserLocalStorage(null);
-        setMessage("Please log in");
+        setNotification("Please log in");
         setLoading(false);
       }
     } else {
       setUserLocalStorage(null);
-      setMessage("Please log in");
+      setNotification("Please log in");
       setLoading(false);
     }
   }, []);
@@ -170,9 +170,6 @@ const Users: React.FC = () => {
       </Box>
     );
   }
-
-  console.log(user);
-  console.log("front USER ID", userLocalStorage?.roles_id);
   if (!userLocalStorage) {
     return <Navigate to="/login" />;
   }
@@ -181,7 +178,7 @@ const Users: React.FC = () => {
     <Container maxWidth="lg">
       <Box sx={{ my: 4 }}>
         <Typography variant="h4" gutterBottom>
-          Users Information
+          {page}
         </Typography>
         <Table>
           <TableHead>

@@ -68,13 +68,17 @@ const Faculty: React.FC = () => {
   const [notification, setNotification] = useState<string>("");
   const [message, setMessage] = useState<string>("");
   const [adding, setAdding] = useState<boolean>(false);
-  const [page, setPage] = useState<string>("");
   const [loggingOut, setLoggingOut] = useState<boolean>(false); // ✅ เพิ่ม
   const [facultyName, setFacultyName] = useState<string>("");
   const [facultyID, setFacultyID] = useState<number | null>(null); // for editing
   const [openDialogAdd, setOpenDialogAdd] = useState<boolean>(false);
   const [openDialogEdit, setOpenDialogEdit] = useState<boolean>(false);
   const [openDialogDelete, setOpenDialogDelete] = useState<boolean>(false);
+
+  const [countFaculty, setCountFaculty] = useState<number>(0);
+  const [totalPages, setTotalPages] = useState<number>(0);
+  const [page, setPage] = useState<number>(1);
+  const [limit] = useState<number>(10);
 
   const navigate = useNavigate(); // ใช้ useNavigate เพื่อใช้ฟังก์ชัน navigate
 
@@ -89,7 +93,7 @@ const Faculty: React.FC = () => {
         const fetchData = async () => {
           try {
             const response = await axios.get(
-              "http://localhost:3001/faculty/data",
+              `http://localhost:3001/faculty/data?page=${page}&limit=${limit}`,
               {
                 withCredentials: true,
               }
@@ -102,6 +106,8 @@ const Faculty: React.FC = () => {
               } else {
                 setPage(response.data.page);
                 setFacultyData(response.data.facultyData);
+                setCountFaculty(response.data.countFaculty);
+                setTotalPages(Math.ceil(response.data.countFaculty / limit));
                 setNotification(response.data.notification);
                 setLoading(false);
               }
@@ -117,10 +123,11 @@ const Faculty: React.FC = () => {
             navigate("/unauthorized");
 
             setLoading(false);
-
+            handleLogout();
             // ตรวจสอบข้อผิดพลาดเป็น AxiosError
             if ((error as AxiosError).response?.status === 401) {
               navigate("/unauthorized");
+              setLoading(false);
               handleLogout();
             }
           }
@@ -139,7 +146,11 @@ const Faculty: React.FC = () => {
       setNotification("Please log in");
       setLoading(false);
     }
-  }, []);
+  }, [page, limit]);
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  };
 
   const handleAddFaculty = async () => {
     setAdding(true);
@@ -150,7 +161,7 @@ const Faculty: React.FC = () => {
         { withCredentials: true }
       );
 
-      if (response.status === 200) {
+      if (response.status === 201) {
         setMessage("เพิ่มชื่อคณะสำเร็จ !");
         setTimeout(() => {
           setMessage("");
@@ -182,7 +193,7 @@ const Faculty: React.FC = () => {
           { withCredentials: true }
         );
 
-        if (response.status === 200) {
+        if (response.status === 201) {
           setMessage("แก้ไขชื่อคณะสำเร็จ !");
           setTimeout(() => {
             setMessage("");
@@ -216,7 +227,7 @@ const Faculty: React.FC = () => {
           { withCredentials: true }
         );
 
-        if (response.status === 200) {
+        if (response.status === 201) {
           setMessage("ลบชื่อคณะสำเร็จ !");
           setTimeout(() => {
             setMessage("");
@@ -372,6 +383,31 @@ const Faculty: React.FC = () => {
             ))}
           </TableBody>
         </Table>
+
+        {/* Pagination Controls */}
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+          <Button
+            disabled={page === 1}
+            onClick={() => handlePageChange(page - 1)} // ลด page ไป 1 หน้า
+          >
+            Previous
+          </Button>
+          <Typography sx={{ mx: 2 }}>
+            Page {page} of {totalPages} {/* แสดงเลขหน้า */}
+          </Typography>
+          <Button
+            disabled={page === totalPages}
+            onClick={() => handlePageChange(page + 1)} // เพิ่ม page ไป 1 หน้า
+          >
+            Next
+          </Button>
+        </Box>
+        <Typography
+          variant="h6"
+          sx={{ display: "flex", justifyContent: "center", mt: 2 }}
+        >
+          จำนวนคณะทั้งหมด: {countFaculty}
+        </Typography>
       </Box>
 
       {/* Dialog for adding faculty */}

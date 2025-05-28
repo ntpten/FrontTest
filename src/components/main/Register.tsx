@@ -42,7 +42,7 @@ const Register: React.FC = () => {
         password,
       });
 
-      if (response.status === 200) {
+      if (response.status === 201) {
         setMessage("ลงทะเบียนสำเร็จ! กำลังเปลี่ยนไปยังหน้าล็อกอิน...");
         setTimeout(() => {
           navigate("/login");

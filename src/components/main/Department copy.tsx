@@ -15,6 +15,7 @@ import {
   DialogContent,
   DialogTitle,
   TextField,
+  MenuItem,
 } from "@mui/material";
 import axios, { AxiosError } from "axios";
 import { Navigate, useNavigate } from "react-router-dom"; // นำเข้า useNavigate
@@ -27,12 +28,18 @@ interface User {
   roles_name: string;
 }
 
+interface Departments {
+  department_id: number;
+  department_name: string;
+  faculty_id: number;
+}
+
 interface Facultys {
   faculty_id: number;
   faculty_name: string;
 }
 
-const Faculty: React.FC = () => {
+const Department: React.FC = () => {
   const handleLogout = async () => {
     setLoggingOut(true); // เริ่มแสดง loading
     try {
@@ -59,7 +66,7 @@ const Faculty: React.FC = () => {
     }
   };
 
-  const [facultyData, setFacultyData] = useState<Facultys[]>([]);
+  const [departmentData, setDepartmentData] = useState<Departments[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
   const [redirectToLogin, setRedirectToLogin] = useState<boolean>(false);
@@ -69,13 +76,15 @@ const Faculty: React.FC = () => {
   const [message, setMessage] = useState<string>("");
   const [adding, setAdding] = useState<boolean>(false);
   const [loggingOut, setLoggingOut] = useState<boolean>(false); // ✅ เพิ่ม
-  const [facultyName, setFacultyName] = useState<string>("");
-  const [facultyID, setFacultyID] = useState<number | null>(null); // for editing
+  const [departmentName, setDepartmentName] = useState<string>("");
+  const [departmentID, setDepartmentID] = useState<number | null>(null); // for editing
   const [openDialogAdd, setOpenDialogAdd] = useState<boolean>(false);
   const [openDialogEdit, setOpenDialogEdit] = useState<boolean>(false);
   const [openDialogDelete, setOpenDialogDelete] = useState<boolean>(false);
+  const [facultyData, setFacultyData] = useState<Facultys[]>([]); // เพิ่มตัวแปรสำหรับเก็บข้อมูล Faculty
+  const [facultyID, setFacultyID] = useState<number | null>(null); // เพิ่มตัวแปรสำหรับเก็บ faculty_id ที่เลือก
 
-  const [countFaculty, setCountFaculty] = useState<number>(0);
+  const [countDepartments, setCountDepartments] = useState<number>(0);
   const [totalPages, setTotalPages] = useState<number>(0);
   const [page, setPage] = useState<number>(1);
   const [limit] = useState<number>(10);
@@ -93,7 +102,7 @@ const Faculty: React.FC = () => {
         const fetchData = async () => {
           try {
             const response = await axios.get(
-              `http://localhost:3001/faculty/data?page=${page}&limit=${limit}`,
+              `http://localhost:3001/department/data?page=${page}&limit=${limit}`,
               {
                 withCredentials: true,
               }
@@ -101,14 +110,14 @@ const Faculty: React.FC = () => {
 
             if (response.status === 200) {
               if (response.data.user === null) {
-                // setRedirectToLogin(true);
                 handleLogout();
               } else {
                 setPage(response.data.page);
-                setFacultyData(response.data.facultyData);
-                setCountFaculty(response.data.countFaculty);
-                setTotalPages(Math.ceil(response.data.countFaculty / limit));
+                setDepartmentData(response.data.departmentData);
+                setCountDepartments(response.data.countDepartment);
+                setTotalPages(Math.ceil(response.data.countDepartment / limit));
                 setNotification(response.data.notification);
+                setFacultyData(response.data.facultyData);
                 setLoading(false);
               }
             } else {
@@ -123,11 +132,10 @@ const Faculty: React.FC = () => {
             navigate("/unauthorized");
 
             setLoading(false);
-            handleLogout();
+
             // ตรวจสอบข้อผิดพลาดเป็น AxiosError
             if ((error as AxiosError).response?.status === 401) {
               navigate("/unauthorized");
-              setLoading(false);
               handleLogout();
             }
           }
@@ -152,26 +160,37 @@ const Faculty: React.FC = () => {
     setPage(newPage);
   };
 
-  const handleAddFaculty = async () => {
-    setAdding(true);
+  const handleAddDepartment = async () => {
+    setAdding(true); // ตั้งสถานะการโหลดเป็น true
+    if (facultyID === null) {
+      setMessage("กรุณาเลือก Faculty");
+      setAdding(false); // รีเซ็ตสถานะเมื่อเลือก Faculty ไม่ได้
+      return;
+    }
     try {
       const response = await axios.post(
-        "http://localhost:3001/faculty/addNameFaculty",
-        { faculty_name: facultyName },
+        "http://localhost:3001/department/addNameDepartment",
+        { department_name: departmentName, faculty_id: facultyID },
         { withCredentials: true }
       );
 
       if (response.status === 201) {
-        setMessage("เพิ่มชื่อคณะสำเร็จ !");
+        setMessage("เพิ่มชื่อสาขาสำเร็จ !");
+        // อัพเดตข้อมูลใน departmentData ทันที
+        setDepartmentData((prev) => [
+          ...prev,
+          {
+            department_id: prev.length + 1,
+            department_name: departmentName,
+            faculty_id: facultyID,
+          }, // เพิ่ม faculty_id
+        ]);
         setTimeout(() => {
-          setMessage("");
-          setOpenDialogAdd(false);
-          setFacultyName("");
-          setFacultyData((prev) => [
-            ...prev,
-            { faculty_id: prev.length + 1, faculty_name: facultyName },
-          ]);
-          setAdding(false);
+          setMessage(""); // รีเซ็ตข้อความ
+          setOpenDialogAdd(false); // ปิด Dialog
+          setDepartmentName(""); // รีเซ็ตชื่อสาขา
+          setFacultyID(null); // รีเซ็ต faculty_id
+          setAdding(false); // รีเซ็ตสถานะการเพิ่ม
         }, 2000);
       } else {
         setMessage(response.data.message);
@@ -183,57 +202,69 @@ const Faculty: React.FC = () => {
     }
   };
 
-  const handleEditFaculty = async () => {
-    if (facultyID !== null) {
-      setAdding(true);
+  const handleEditDepartment = async () => {
+    if (departmentID !== null && facultyID !== null) {
+      setAdding(true); // ตั้งสถานะการโหลดเป็น true
       try {
         const response = await axios.put(
-          `http://localhost:3001/faculty/editNameFaculty/${facultyID}`,
-          { faculty_name: facultyName },
+          `http://localhost:3001/department/editNameDepartment/${departmentID}`,
+          { department_name: departmentName, faculty_id: facultyID },
           { withCredentials: true }
         );
 
         if (response.status === 201) {
-          setMessage("แก้ไขชื่อคณะสำเร็จ !");
+          setMessage("แก้ไขชื่อสาขาสำเร็จ !");
+          // อัพเดตข้อมูลใน departmentData ทันที
+          setDepartmentData((prev) =>
+            prev.map((department) =>
+              department.department_id === departmentID
+                ? {
+                    ...department,
+                    department_name: departmentName,
+                    faculty_id: facultyID,
+                  }
+                : department
+            )
+          );
           setTimeout(() => {
-            setMessage("");
-            setOpenDialogEdit(false);
-            setFacultyName("");
-            setFacultyData((prev) =>
-              prev.map((faculty) =>
-                faculty.faculty_id === facultyID
-                  ? { ...faculty, faculty_name: facultyName }
-                  : faculty
-              )
-            );
-            setAdding(false);
+            setMessage(""); // รีเซ็ตข้อความ
+            setOpenDialogEdit(false); // ปิด Dialog
+            setDepartmentName(""); // รีเซ็ตชื่อสาขา
+            setFacultyID(null); // รีเซ็ต faculty_id
+            setAdding(false); // รีเซ็ตสถานะการเพิ่ม
           }, 2000);
         } else {
           setMessage(response.data.message);
+          setAdding(false);
         }
       } catch (error: any) {
         setMessage("เกิดข้อผิดพลาด");
         setAdding(false);
       }
+    } else {
+      setMessage("กรุณาเลือก Faculty");
+      setAdding(false); // รีเซ็ตสถานะเมื่อไม่มี faculty
     }
   };
 
-  const handleDeleteFaculty = async () => {
-    if (facultyID !== null) {
+  const handleDeleteDepartment = async () => {
+    if (departmentID !== null) {
       setAdding(true);
       try {
         const response = await axios.delete(
-          `http://localhost:3001/faculty/deleteFaculty/${facultyID}`,
+          `http://localhost:3001/department/deleteDepartment/${departmentID}`,
           { withCredentials: true }
         );
 
         if (response.status === 201) {
-          setMessage("ลบชื่อคณะสำเร็จ !");
+          setMessage("ลบชื่อสาขาสำเร็จ !");
           setTimeout(() => {
             setMessage("");
             setOpenDialogDelete(false); // ปิด Dialog เมื่อการลบเสร็จสิ้น
-            setFacultyData((prev) =>
-              prev.filter((faculty) => faculty.faculty_id !== facultyID)
+            setDepartmentData((prev) =>
+              prev.filter(
+                (department) => department.department_id !== departmentID
+              )
             );
             setAdding(false);
           }, 2000);
@@ -252,7 +283,7 @@ const Faculty: React.FC = () => {
     setOpenDialogAdd(false);
     setOpenDialogEdit(false);
     setOpenDialogDelete(false);
-    setFacultyName("");
+    setDepartmentName("");
     setMessage("");
   };
 
@@ -260,15 +291,23 @@ const Faculty: React.FC = () => {
     setOpenDialogAdd(true);
   };
 
-  const handleOpenDialogEdit = (faculty_id: number, faculty_name: string) => {
+  const handleOpenDialogEdit = (
+    department_id: number,
+    department_name: string,
+    faculty_id: number
+  ) => {
+    setDepartmentID(department_id);
+    setDepartmentName(department_name);
     setFacultyID(faculty_id);
-    setFacultyName(faculty_name);
     setOpenDialogEdit(true);
   };
 
-  const handleOpenDialogDelete = (faculty_id: number, faculty_name: string) => {
-    setFacultyID(faculty_id);
-    setFacultyName(faculty_name);
+  const handleOpenDialogDelete = (
+    department_id: number,
+    department_name: string
+  ) => {
+    setDepartmentID(department_id);
+    setDepartmentName(department_name);
     setOpenDialogDelete(true);
   };
 
@@ -337,50 +376,60 @@ const Faculty: React.FC = () => {
           color="primary"
           onClick={handleOpenDialogAdd}
         >
-          เพิ่มชื่อคณะ
+          เพิ่มชื่อสาขา
         </Button>
         <Table>
           <TableHead>
             <TableRow>
               <TableCell>#</TableCell>
-              <TableCell>Faculty Name</TableCell>
+              <TableCell>สาขา</TableCell>
+              <TableCell>คณะ</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {facultyData.map((faculty, index) => (
-              <TableRow key={index}>
-                <TableCell>{faculty.faculty_id}</TableCell>
-                <TableCell>{faculty.faculty_name}</TableCell>
-                <TableCell>
-                  <Button
-                    variant="outlined"
-                    color="secondary"
-                    onClick={() =>
-                      handleOpenDialogEdit(
-                        faculty.faculty_id,
-                        faculty.faculty_name
-                      )
-                    }
-                    sx={{ mr: 1 }} // เพิ่มระยะห่างเล็กน้อยจากปุ่ม "ลบ"
-                  >
-                    แก้ไข
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    color="secondary"
-                    onClick={() =>
-                      handleOpenDialogDelete(
-                        faculty.faculty_id,
-                        faculty.faculty_name
-                      )
-                    }
-                  >
-                    ลบ
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
+            {departmentData.map((department, index) => {
+              const faculty = facultyData.find(
+                (faculty) => faculty.faculty_id === department.faculty_id
+              );
+              return (
+                <TableRow key={index}>
+                  <TableCell>{department.department_id}</TableCell>
+                  <TableCell>{department.department_name}</TableCell>
+                  <TableCell>
+                    {faculty ? faculty.faculty_name : "ไม่พบข้อมูล"}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outlined"
+                      color="secondary"
+                      onClick={() =>
+                        handleOpenDialogEdit(
+                          department.department_id,
+                          department.department_name,
+                          department.faculty_id
+                        )
+                      }
+                      sx={{ mr: 1 }}
+                    >
+                      แก้ไข
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      color="secondary"
+                      onClick={() =>
+                        handleOpenDialogDelete(
+                          department.department_id,
+                          department.department_name
+                        )
+                      }
+                    >
+                      ลบ
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
 
@@ -406,21 +455,36 @@ const Faculty: React.FC = () => {
           variant="h6"
           sx={{ display: "flex", justifyContent: "center", mt: 2 }}
         >
-          จำนวนคณะทั้งหมด: {countFaculty}
+          จำนวนแผนกทั้งหมด: {countDepartments}
         </Typography>
       </Box>
 
-      {/* Dialog for adding faculty */}
+      {/* Dialogs */}
+      {/* Dialog for adding*/}
       <Dialog open={openDialogAdd} onClose={handleCloseDialog}>
-        <DialogTitle>เพิ่มชื่อคณะ</DialogTitle>
+        <DialogTitle>เพิ่มชื่อสาขา</DialogTitle>
         <DialogContent>
           <TextField
-            label="Faculty Name"
+            label="Department Name"
             fullWidth
-            value={facultyName}
-            onChange={(e) => setFacultyName(e.target.value)}
+            value={departmentName}
+            onChange={(e) => setDepartmentName(e.target.value)}
             sx={{ mb: 2 }}
           />
+          <TextField
+            select
+            label="เลือก Faculty"
+            fullWidth
+            value={facultyID || ""}
+            onChange={(e) => setFacultyID(parseInt(e.target.value))}
+            sx={{ mb: 2 }}
+          >
+            {facultyData.map((faculty) => (
+              <MenuItem key={faculty.faculty_id} value={faculty.faculty_id}>
+                {faculty.faculty_name}
+              </MenuItem>
+            ))}
+          </TextField>
           {message && <Typography color="error">{message}</Typography>}
           {adding && (
             <CircularProgress
@@ -433,23 +497,37 @@ const Faculty: React.FC = () => {
           <Button onClick={handleCloseDialog} color="secondary">
             ยกเลิก
           </Button>
-          <Button onClick={handleAddFaculty} color="primary">
+          <Button onClick={handleAddDepartment} color="primary">
             เพิ่ม
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Dialog for editing faculty */}
+      {/* Dialog for editing */}
       <Dialog open={openDialogEdit} onClose={handleCloseDialog}>
-        <DialogTitle>แก้ไขชื่อคณะ</DialogTitle>
+        <DialogTitle>แก้ไขชื่อสาขา</DialogTitle>
         <DialogContent>
           <TextField
-            label="Faculty Name"
+            label="Department Name"
             fullWidth
-            value={facultyName}
-            onChange={(e) => setFacultyName(e.target.value)}
+            value={departmentName}
+            onChange={(e) => setDepartmentName(e.target.value)}
             sx={{ mb: 2 }}
           />
+          <TextField
+            select
+            label="เลือก Faculty"
+            fullWidth
+            value={facultyID || ""}
+            onChange={(e) => setFacultyID(parseInt(e.target.value))}
+            sx={{ mb: 2 }}
+          >
+            {facultyData.map((faculty) => (
+              <MenuItem key={faculty.faculty_id} value={faculty.faculty_id}>
+                {faculty.faculty_name}
+              </MenuItem>
+            ))}
+          </TextField>
           {message && <Typography color="error">{message}</Typography>}
           {adding && (
             <CircularProgress
@@ -462,20 +540,19 @@ const Faculty: React.FC = () => {
           <Button onClick={handleCloseDialog} color="secondary">
             ยกเลิก
           </Button>
-          <Button onClick={handleEditFaculty} color="primary">
+          <Button onClick={handleEditDepartment} color="primary">
             แก้ไข
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Dialog for deleting faculty */}
+      {/* Dialog for deleting */}
       <Dialog open={openDialogDelete} onClose={handleCloseDialog}>
-        <DialogTitle>ลบชื่อคณะ</DialogTitle>
+        <DialogTitle>ลบชื่อสาขา</DialogTitle>
         <DialogContent>
           <Typography variant="h6" sx={{ mb: 2 }}>
-            {facultyID}. {facultyName}
+            {departmentID}. {departmentName}
           </Typography>
-
           {message && <Typography color="error">{message}</Typography>}
           {adding && (
             <CircularProgress
@@ -488,7 +565,7 @@ const Faculty: React.FC = () => {
           <Button onClick={handleCloseDialog} color="secondary">
             ยกเลิก
           </Button>
-          <Button onClick={handleDeleteFaculty} color="primary">
+          <Button onClick={handleDeleteDepartment} color="primary">
             ลบ
           </Button>
         </DialogActions>
@@ -497,4 +574,4 @@ const Faculty: React.FC = () => {
   );
 };
 
-export default Faculty;
+export default Department;
