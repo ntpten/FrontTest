@@ -11,7 +11,7 @@ import Faculty from "./components/main/Faculty";
 import Department from "./components/main/Department";
 import Role from "./components/main/Roles";
 import Students from "./components/main/Students";
-
+import StudentsData from "./components/main/StudentsData";
 
 const App: React.FC = () => {
   return (
@@ -27,6 +27,7 @@ const App: React.FC = () => {
         <Route path="/department" element={<Department />} />
         <Route path="/roles" element={<Role />} />
         <Route path="/students" element={<Students />} />
+        <Route path="/studentsData" element={<StudentsData />} />
       </Routes>
       <Footer />
     </Router>

@@ -406,6 +406,9 @@ const Students: React.FC = () => {
   if (!userLocalStorage) {
     return <Navigate to="/login" />;
   }
+  const handleStudents = () => {
+    navigate("/students");
+  };
 
   return (
     <Container maxWidth="lg">
@@ -413,6 +416,9 @@ const Students: React.FC = () => {
         <Typography variant="h4" gutterBottom>
           {page}
         </Typography>
+        <Button onClick={handleStudents} color="primary" variant="contained">
+          นิสิตที่ลงทะเบียนสำเร็จแล้ว 
+        </Button>
         <Table>
           <TableHead>
             <TableRow>
