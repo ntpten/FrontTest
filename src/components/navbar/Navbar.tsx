@@ -115,6 +115,12 @@ const Navbar: React.FC = () => {
                   <Button color="inherit" component={Link} to="/users">
                     Users
                   </Button>
+                  <Button color="inherit" component={Link} to="/students">
+                    Student (สำหรับ Admin)
+                  </Button>
+                  <Button color="inherit" component={Link} to="/roles">
+                    Roles
+                  </Button>
                   <Button color="inherit" component={Link} to="/faculty">
                     Faculty
                   </Button>

@@ -9,6 +9,9 @@ import Users from "./components/main/Users";
 import Unauthorized from "./components/main/Unauthorized";
 import Faculty from "./components/main/Faculty";
 import Department from "./components/main/Department";
+import Role from "./components/main/Roles";
+import Students from "./components/main/Students";
+
 
 const App: React.FC = () => {
   return (
@@ -22,6 +25,8 @@ const App: React.FC = () => {
         <Route path="/unauthorized" element={<Unauthorized />} />
         <Route path="/faculty" element={<Faculty />} />
         <Route path="/department" element={<Department />} />
+        <Route path="/roles" element={<Role />} />
+        <Route path="/students" element={<Students />} />
       </Routes>
       <Footer />
     </Router>

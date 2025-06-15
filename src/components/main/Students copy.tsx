@@ -28,12 +28,45 @@ interface User {
   roles_name: string;
 }
 
-interface Roles {
-  roles_id: number;
+interface Student {
+  users_id: number;
+  username: string;
   roles_name: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  soft_hours: number;
+  hard_hours: number;
+  risk_status: string;
+  education_status: string;
+  faculty_name: string;
+  department_name: string;
+  level: number;
+  date: Date;
 }
 
-const Users: React.FC = () => {
+interface Facultys {
+  faculty_id: number;
+  faculty_name: string;
+}
+
+interface Departments {
+  department_id: number;
+  department_name: string;
+  faculty_id: number;
+}
+
+interface Grade {
+  grade_id: number;
+  level: number;
+}
+
+interface EventCoop {
+  eventcoop_id: number;
+  date: Date;
+}
+
+const Students: React.FC = () => {
   // ประกาศฟังก์ชัน handleLogout ที่นี่
   const handleLogout = async () => {
     setLoggingOut(true); // เริ่มแสดง loading
@@ -59,25 +92,26 @@ const Users: React.FC = () => {
     }
   };
 
-  const [usersData, setUsersData] = useState<any[]>([]);
+  const [studentsData, setStudentsData] = useState<Student[]>([]);
+  const [facultyData, setFacultyData] = useState<Facultys[]>([]);
+  const [departmentData, setDepartmentData] = useState<Departments[]>([]);
+  const [gradeData, setGradeData] = useState<Grade[]>([]);
+  const [eventCoopData, setEventCoopData] = useState<EventCoop[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
   const [userLocalStorage, setUserLocalStorage] = useState<User | null>(null);
-  const [username, setUsername] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [rolesID, setRolesID] = useState<number | null>(null);
-  const [rolesData, setRolesData] = useState<Roles[]>([]);
-  const [usersID, setUsersID] = useState<number>(0);
-  const [user, setUser] = useState<User | null>(null);
-  const [newPassword, setNewPassword] = useState<string>("");
-  const [confirmPassword, setConfirmPassword] = useState<string>("");
 
   const [message, setMessage] = useState<string>("");
 
   const [page, setPage] = useState<number>(1);
   const [limit] = useState<number>(10);
   const [totalPages, setTotalPages] = useState<number>(0);
-  const [countUsers, setCountUsers] = useState<number>(0);
+  const [countStudents, setCountStudents] = useState<number>(0);
+
+  const [firstName, setFirstName] = useState<string>("");
+  const [lastName, setLastName] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [educationStatus, setEducationStatus] = useState<string>("");
 
   const [notification, setNotification] = useState<string>("");
   const [loggingOut, setLoggingOut] = useState<boolean>(false); // ✅ เพิ่ม
@@ -103,7 +137,7 @@ const Users: React.FC = () => {
         const fetchData = async () => {
           try {
             const response = await axios.get(
-              `http://localhost:3001/users?page=${page}&limit=${limit}`,
+              `http://localhost:3001/students/data?page=${page}&limit=${limit}`,
               { withCredentials: true }
             );
 
@@ -113,10 +147,13 @@ const Users: React.FC = () => {
                 handleLogout();
               } else {
                 setPage(response.data.page);
-                setUsersData(response.data.usersData);
-                setCountUsers(response.data.countUsers);
-                setTotalPages(Math.ceil(response.data.countUsers / limit));
-                setRolesData(response.data.roles);
+                setStudentsData(response.data.studentsData);
+                setCountStudents(response.data.countStudents);
+                setTotalPages(Math.ceil(response.data.countStudents / limit));
+                setFacultyData(response.data.facultyData);
+                setDepartmentData(response.data.departmentData);
+                setGradeData(response.data.gradeData);
+                setEventCoopData(response.data.eventCoopData);
                 setNotification(response.data.notification);
                 setLoading(false);
               }
@@ -160,219 +197,222 @@ const Users: React.FC = () => {
     setPage(newPage);
   };
 
-  const handleCloseDialog = () => {
-    setOpenDialogAdd(false);
-    setOpenDialogEdit(false);
-    setOpenDialogDelete(false);
-    setOpenDialogChangePassword(false)
-    setUsername("");
-    setMessage("");
-  };
+  //   const handleCloseDialog = () => {
+  //     setOpenDialogAdd(false);
+  //     setOpenDialogEdit(false);
+  //     setOpenDialogDelete(false);
+  //     setFirstName("");
+  //     setLastName("");
+  //     setEmail("");
+  //     setEducationStatus("");
+  //     setMessage("");
+  //   };
 
-  const handleOpenDialogAdd = () => {
-    setUsername("");
-    setPassword("");
-    setRolesID(null);
-    setOpenDialogAdd(true);
-  };
+  //   const handleOpenDialogAdd = () => {
+  //     setFirstName("");
+  //     setLastName("");
+  //     setEmail("");
+  //     setEducationStatus("");
+  //     setRolesID(null);
+  //     setOpenDialogAdd(true);
+  //   };
 
-  const handleAddUsers = async () => {
-    setAdding(true);
-    if (rolesID === null) {
-      setMessage(message || "กรุณาเลือก Roles");
-      setAdding(false);
-      return;
-    }
+  //   const handleAddUsers = async () => {
+  //     setAdding(true);
+  //     if (rolesID === null) {
+  //       setMessage(message || "กรุณาเลือก Roles");
+  //       setAdding(false);
+  //       return;
+  //     }
 
-    if (!username || !password) {
-      setMessage(message || "กรุณากรอกข้อมูลผู้ใช้และรหัสผ่าน");
-      setAdding(false);
-      return;
-    }
-    try {
-      const response = await axios.post(
-        "http://localhost:3001/addUsers",
-        { username, password, roles_id: rolesID },
-        { withCredentials: true }
-      );
+  //     if (!username || !password) {
+  //       setMessage(message || "กรุณากรอกข้อมูลผู้ใช้และรหัสผ่าน");
+  //       setAdding(false);
+  //       return;
+  //     }
+  //     try {
+  //       const response = await axios.post(
+  //         "http://localhost:3001/addUsers",
+  //         { username, password, roles_id: rolesID },
+  //         { withCredentials: true }
+  //       );
 
-      if (response.status === 201) {
-        setMessage(response.data.message || "เพิ่มผู้ใช้สำเร็จ !");
-        setUsersData((prev) => [
-          ...prev,
-          {
-            users_id: prev.length + 1,
-            username: username,
-            password: password,
-            roles_id: rolesID,
-            roles_name:
-              rolesData.find((role) => role.roles_id === rolesID)?.roles_name ||
-              "",
-          },
-        ]);
-        setTimeout(() => {
-          setMessage("");
-          setOpenDialogAdd(false);
-          setUsername("");
-          setPassword("");
-          setRolesID(null);
-          setAdding(false);
-        }, 2000);
-      } else {
-        setMessage(response.data.message);
-        setAdding(false);
-      }
-    } catch (error: any) {
-      setMessage(error.response?.data?.message || "เกิดข้อผิดพลาด");
-      setAdding(false);
-    }
-  };
+  //       if (response.status === 201) {
+  //         setMessage(response.data.message || "เพิ่มผู้ใช้สำเร็จ !");
+  //         setUsersData((prev) => [
+  //           ...prev,
+  //           {
+  //             users_id: prev.length + 1,
+  //             username: username,
+  //             password: password,
+  //             roles_id: rolesID,
+  //             roles_name:
+  //               rolesData.find((role) => role.roles_id === rolesID)?.roles_name ||
+  //               "",
+  //           },
+  //         ]);
+  //         setTimeout(() => {
+  //           setMessage("");
+  //           setOpenDialogAdd(false);
+  //           setUsername("");
+  //           setPassword("");
+  //           setRolesID(null);
+  //           setAdding(false);
+  //         }, 2000);
+  //       } else {
+  //         setMessage(response.data.message);
+  //         setAdding(false);
+  //       }
+  //     } catch (error: any) {
+  //       setMessage(error.response?.data?.message || "เกิดข้อผิดพลาด");
+  //       setAdding(false);
+  //     }
+  //   };
 
-  const handleOpenDialogEdit = (
-    user_id: number,
-    username: string,
-    roles_id: number
-  ) => {
-    setUsersID(user_id);
-    setUsername(username);
-    setInitialUsername(username); // เก็บค่า initialUsername
-    setRolesID(roles_id);
-    setOpenDialogEdit(true);
-  };
+  //   const handleOpenDialogEdit = (
+  //     user_id: number,
+  //     username: string,
+  //     roles_id: number
+  //   ) => {
+  //     setUsersID(user_id);
+  //     setUsername(username);
+  //     setInitialUsername(username); // เก็บค่า initialUsername
+  //     setRolesID(roles_id);
+  //     setOpenDialogEdit(true);
+  //   };
 
-  const handleEditUsers = async (userID: number) => {
-    setAdding(true);
-    // ตรวจสอบค่าของ username และ rolesID
-    if (!username.trim() || rolesID === null) {
-      setMessage("กรุณากรอกข้อมูลให้ครบถ้วน");
-      setAdding(false);
-      return;
-    }
+  //   const handleEditUsers = async (userID: number) => {
+  //     setAdding(true);
+  //     // ตรวจสอบค่าของ username และ rolesID
+  //     if (!username.trim() || rolesID === null) {
+  //       setMessage("กรุณากรอกข้อมูลให้ครบถ้วน");
+  //       setAdding(false);
+  //       return;
+  //     }
 
-    try {
-      // ปรับประเภทของ requestData ให้รองรับ username และ roles_id
-      let requestData: { username?: string; roles_id: number } = {
-        roles_id: rolesID,
-      };
+  //     try {
+  //       // ปรับประเภทของ requestData ให้รองรับ username และ roles_id
+  //       let requestData: { username?: string; roles_id: number } = {
+  //         roles_id: rolesID,
+  //       };
 
-      // ตรวจสอบว่า username ถูกเปลี่ยนแปลงหรือไม่
-      if (username.trim() !== initialUsername) {
-        requestData.username = username; // ถ้าเปลี่ยนแปลงให้ส่งค่า username ด้วย
-      }
+  //       // ตรวจสอบว่า username ถูกเปลี่ยนแปลงหรือไม่
+  //       if (username.trim() !== initialUsername) {
+  //         requestData.username = username; // ถ้าเปลี่ยนแปลงให้ส่งค่า username ด้วย
+  //       }
 
-      const response = await axios.put(
-        `http://localhost:3001/editUsers/${userID}`,
-        requestData,
-        { withCredentials: true }
-      );
+  //       const response = await axios.put(
+  //         `http://localhost:3001/editUsers/${userID}`,
+  //         requestData,
+  //         { withCredentials: true }
+  //       );
 
-      if (response.status === 201) {
-        setMessage("แก้ไขข้อมูลผู้ใช้สำเร็จ!");
-        setUsersData((prev) =>
-          prev.map((user) =>
-            user.users_id === userID
-              ? {
-                  ...user,
-                  username,
-                  roles_id: rolesID,
-                  roles_name:
-                    rolesData.find((role) => role.roles_id === rolesID)
-                      ?.roles_name || "",
-                }
-              : user
-          )
-        );
-        setTimeout(() => {
-          setMessage("");
-          setOpenDialogEdit(false);
-          setUsername(""); // รีเซ็ต username
-          setRolesID(null); // รีเซ็ต rolesID
-          setAdding(false);
-        }, 2000);
-      } else {
-        setMessage(response.data.message);
-        setAdding(false);
-      }
-    } catch (error: any) {
-      setMessage("เกิดข้อผิดพลาดในการแก้ไขข้อมูลผู้ใช้");
-      setAdding(false);
-    }
-  };
+  //       if (response.status === 201) {
+  //         setMessage("แก้ไขข้อมูลผู้ใช้สำเร็จ!");
+  //         setUsersData((prev) =>
+  //           prev.map((user) =>
+  //             user.users_id === userID
+  //               ? {
+  //                   ...user,
+  //                   username,
+  //                   roles_id: rolesID,
+  //                   roles_name:
+  //                     rolesData.find((role) => role.roles_id === rolesID)
+  //                       ?.roles_name || "",
+  //                 }
+  //               : user
+  //           )
+  //         );
+  //         setTimeout(() => {
+  //           setMessage("");
+  //           setOpenDialogEdit(false);
+  //           setUsername(""); // รีเซ็ต username
+  //           setRolesID(null); // รีเซ็ต rolesID
+  //           setAdding(false);
+  //         }, 2000);
+  //       } else {
+  //         setMessage(response.data.message);
+  //         setAdding(false);
+  //       }
+  //     } catch (error: any) {
+  //       setMessage("เกิดข้อผิดพลาดในการแก้ไขข้อมูลผู้ใช้");
+  //       setAdding(false);
+  //     }
+  //   };
 
-  const handleOpenDialogDelete = (user_id: number, username: string) => {
-    setUsersID(user_id);
-    setUsername(username);
-    setOpenDialogDelete(true);
-  };
+  //   const handleOpenDialogDelete = (user_id: number, username: string) => {
+  //     setUsersID(user_id);
+  //     setUsername(username);
+  //     setOpenDialogDelete(true);
+  //   };
 
-  const handleDeleteUsers = async (userID: number) => {
-    setAdding(true);
+  //   const handleDeleteUsers = async (userID: number) => {
+  //     setAdding(true);
 
-    try {
-      // ส่งคำขอ DELETE ไปที่ API
-      const response = await axios.delete(
-        `http://localhost:3001/deleteUsers/${userID}`,
-        { withCredentials: true }
-      );
+  //     try {
+  //       // ส่งคำขอ DELETE ไปที่ API
+  //       const response = await axios.delete(
+  //         `http://localhost:3001/deleteUsers/${userID}`,
+  //         { withCredentials: true }
+  //       );
 
-      // ตรวจสอบสถานะการตอบกลับ
-      if (response.status === 201) {
-        // ใช้ 200 แทน 201 สำหรับการลบ
-        setMessage("ลบผู้ใช้สำเร็จ !");
-        setOpenDialogDelete(false);
+  //       // ตรวจสอบสถานะการตอบกลับ
+  //       if (response.status === 201) {
+  //         // ใช้ 200 แทน 201 สำหรับการลบ
+  //         setMessage("ลบผู้ใช้สำเร็จ !");
+  //         setOpenDialogDelete(false);
 
-        // อัปเดตข้อมูลผู้ใช้ใน UI
-        setUsersData((prev) => prev.filter((user) => user.users_id !== userID));
-        setTimeout(() => {
-          setMessage("");
-          setAdding(false);
-          
-        }, 2000);
-      } else {
-        setMessage(response.data.message);
-        setAdding(false);
-      }
-    } catch (error: any) {
-      setMessage("เกิดข้อผิดพลาดในการลบผู้ใช้");
-      setAdding(false);
-    }
-  };
-  const handleOpenDialogChangePassword = (users_id: number) => {
-    setUsersID(users_id);
-    setOpenDialogChangePassword(true);
-  };
+  //         // อัปเดตข้อมูลผู้ใช้ใน UI
+  //         setUsersData((prev) => prev.filter((user) => user.users_id !== userID));
+  //         setTimeout(() => {
+  //           setMessage("");
+  //           setAdding(false);
+  //         }, 2000);
+  //       } else {
+  //         setMessage(response.data.message);
+  //         setAdding(false);
+  //       }
+  //     } catch (error: any) {
+  //       setMessage("เกิดข้อผิดพลาดในการลบผู้ใช้");
+  //       setAdding(false);
+  //     }
+  //   };
+  //   const handleOpenDialogChangePassword = (users_id: number) => {
+  //     setUsersID(users_id);
+  //     setOpenDialogChangePassword(true);
+  //   };
 
-  const handleChangePassword = async () => {
-    setAdding(true);
-    if (newPassword !== confirmPassword) {
-      setMessage("รหัสผ่านไม่ตรงกัน");
-      setAdding(false);
-      return;
-    }
-    try {
-      const response = await axios.put(
-        `http://localhost:3001/editPasswordUsers/${usersID}`,
-        { password: newPassword, confirmPassword: confirmPassword },
-        { withCredentials: true }
-      );
-      if (response.status === 201) {
-        setMessage("เปลี่ยนรหัสผ่านสำเร็จ !");
-        setTimeout(() => {
-          setMessage("");
-          setOpenDialogChangePassword(false);
-          setNewPassword("");
-          setConfirmPassword("");
-          setAdding(false);
-        }, 2000);
-      } else {
-        setMessage(response.data.message);
-        setAdding(false);
-      }
-    } catch (error: any) {
-      setMessage("เกิดข้อผิดพลาด");
-      setAdding(false);
-    }
-  };
+  //   const handleChangePassword = async () => {
+  //     setAdding(true);
+  //     if (newPassword !== confirmPassword) {
+  //       setMessage("รหัสผ่านไม่ตรงกัน");
+  //       setAdding(false);
+  //       return;
+  //     }
+  //     try {
+  //       const response = await axios.put(
+  //         `http://localhost:3001/editPasswordUsers/${usersID}`,
+  //         { password: newPassword, confirmPassword: confirmPassword },
+  //         { withCredentials: true }
+  //       );
+  //       if (response.status === 201) {
+  //         setMessage("เปลี่ยนรหัสผ่านสำเร็จ !");
+  //         setTimeout(() => {
+  //           setMessage("");
+  //           setOpenDialogChangePassword(false);
+  //           setNewPassword("");
+  //           setConfirmPassword("");
+  //           setAdding(false);
+  //         }, 2000);
+  //       } else {
+  //         setMessage(response.data.message);
+  //         setAdding(false);
+  //       }
+  //     } catch (error: any) {
+  //       setMessage("เกิดข้อผิดพลาด");
+  //       setAdding(false);
+  //     }
+  //   };
 
   if (loading) {
     return (
@@ -429,30 +469,51 @@ const Users: React.FC = () => {
         <Typography variant="h4" gutterBottom>
           {page}
         </Typography>
-        <Button
+        {/* <Button
           variant="contained"
           color="primary"
           onClick={handleOpenDialogAdd}
         >
           เพิ่มผู้ใช้
-        </Button>
+        </Button> */}
         <Table>
           <TableHead>
             <TableRow>
               <TableCell>#</TableCell>
-              <TableCell>Username</TableCell>
-              <TableCell>Role</TableCell>
+              <TableCell>เลขนิสิต</TableCell>
+              <TableCell>ประเภท</TableCell>
+              <TableCell>ชื่อ</TableCell>
+              <TableCell>นามสกุล</TableCell>
+              <TableCell>อีเมลล์</TableCell>
+              <TableCell>ชั่วโมงซอฟแวร์</TableCell>
+              <TableCell>ชั่วโมงฮาดแวร์</TableCell>
+              <TableCell>สถานะการอบรมณ์</TableCell>
+              <TableCell>สถานะการเรียน</TableCell>
+              <TableCell>คณะ</TableCell>
+              <TableCell>สาขา</TableCell>
+              <TableCell>ชั้นปี</TableCell>
+              <TableCell>เวลาสิ้นสุด</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {usersData.map((user, index) => (
+            {studentsData.map((students, index) => (
               <TableRow key={index}>
-                <TableCell>{user.users_id}</TableCell>
-                <TableCell>{user.username}</TableCell>
-                <TableCell>{user.roles_name}</TableCell>
-                <TableCell>
-                  {/* แก้ไข, ลบ, เปลี่ยนรหัสผ่าน */}
+                <TableCell>{students.users_id}</TableCell>
+                <TableCell>{students.username}</TableCell>
+                <TableCell>{students.roles_name}</TableCell>
+                <TableCell>{students.first_name}</TableCell>
+                <TableCell>{students.last_name}</TableCell>
+                <TableCell>{students.email}</TableCell>
+                <TableCell>{students.soft_hours}</TableCell>
+                <TableCell>{students.hard_hours}</TableCell>
+                <TableCell>{students.risk_status}</TableCell>
+                <TableCell>{students.education_status}</TableCell>
+                <TableCell>{students.faculty_name}</TableCell>
+                <TableCell>{students.department_name}</TableCell>
+                <TableCell>{students.level}</TableCell>
+                <TableCell>{students.date.toString()}</TableCell>
+                {/* <TableCell>
                   <Button
                     variant="outlined"
                     color="secondary"
@@ -485,7 +546,7 @@ const Users: React.FC = () => {
                   >
                     ลบ
                   </Button>
-                </TableCell>
+                </TableCell> */}
               </TableRow>
             ))}
           </TableBody>
@@ -513,14 +574,14 @@ const Users: React.FC = () => {
           variant="h6"
           sx={{ display: "flex", justifyContent: "center", mt: 2 }}
         >
-          จำนวนผู้ใช้ทั้งหมด: {countUsers}
+          จำนวนนิสิตทั้งหมด: {countStudents}
         </Typography>
       </Box>
 
-      {/* Dialogs */}
+      {/* Dialogs
       {/* Dialog for adding user */}
-      <Dialog open={openDialogAdd} onClose={handleCloseDialog}>
-        <DialogTitle>เพิ่มผู้ใช้</DialogTitle>
+      {/* <Dialog open={openDialogAdd} onClose={handleCloseDialog}>
+        <DialogTitle>เพิ่มข้อมูลนิสิต</DialogTitle>
         <DialogContent>
           <TextField
             label="Username"
@@ -567,10 +628,10 @@ const Users: React.FC = () => {
             เพิ่ม
           </Button>
         </DialogActions>
-      </Dialog>
+      </Dialog> */}
 
       {/* Dialog for editing user */}
-      <Dialog open={openDialogEdit} onClose={handleCloseDialog}>
+      {/* <Dialog open={openDialogEdit} onClose={handleCloseDialog}>
         <DialogTitle>แก้ไขข้อมูลผู้ใช้</DialogTitle>
         <DialogContent>
           <TextField
@@ -620,10 +681,10 @@ const Users: React.FC = () => {
             แก้ไข
           </Button>
         </DialogActions>
-      </Dialog>
+      </Dialog> */}
 
       {/* Dialog for editing password */}
-      <Dialog open={openDialogChangePassword} onClose={handleCloseDialog}>
+      {/* <Dialog open={openDialogChangePassword} onClose={handleCloseDialog}>
         <DialogTitle>เปลี่ยนรหัสผ่าน</DialogTitle>
         <DialogContent>
           <TextField
@@ -658,10 +719,10 @@ const Users: React.FC = () => {
             เปลี่ยนรหัสผ่าน
           </Button>
         </DialogActions>
-      </Dialog>
+      </Dialog> */}
 
       {/* Dialog for deleting user */}
-      <Dialog open={openDialogDelete} onClose={handleCloseDialog}>
+      {/* <Dialog open={openDialogDelete} onClose={handleCloseDialog}>
         <DialogTitle>ลบผู้ใช้</DialogTitle>
         <DialogContent>
           <Typography variant="h6" sx={{ mb: 2 }}>
@@ -692,9 +753,9 @@ const Users: React.FC = () => {
             ลบ
           </Button>
         </DialogActions>
-      </Dialog>
+      </Dialog> */}
     </Container>
   );
 };
 
-export default Users;
+export default Students;
