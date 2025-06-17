@@ -28,21 +28,13 @@ interface User {
   roles_name: string;
 }
 
-interface Student {
-  students_id: number;
+interface Teacher {
+  teacher_id: number;
   username: string;
   roles_name: string;
   first_name: string;
   last_name: string;
-  email: string;
-  soft_hours: number;
-  hard_hours: number;
-  risk_status: string;
-  education_status: string;
   faculty_name: string;
-  department_name: string;
-  level: number;
-  date: Date;
 }
 
 interface Facultys {
@@ -50,23 +42,7 @@ interface Facultys {
   faculty_name: string;
 }
 
-interface Departments {
-  department_id: number;
-  department_name: string;
-  faculty_id: number;
-}
-
-interface Grade {
-  grade_id: number;
-  level: number;
-}
-
-interface EventCoop {
-  eventcoop_id: number;
-  date: Date;
-}
-
-const StudentsData: React.FC = () => {
+const Teacher: React.FC = () => {
   // ประกาศฟังก์ชัน handleLogout ที่นี่
   const handleLogout = async () => {
     setLoggingOut(true); // เริ่มแสดง loading
@@ -92,11 +68,8 @@ const StudentsData: React.FC = () => {
     }
   };
 
-  const [studentsData, setStudentsData] = useState<Student[]>([]);
+  const [teacherData, setTeacherData] = useState<Teacher[]>([]);
   const [facultyData, setFacultyData] = useState<Facultys[]>([]);
-  const [departmentData, setDepartmentData] = useState<Departments[]>([]);
-  const [gradeData, setGradeData] = useState<Grade[]>([]);
-  const [eventCoopData, setEventCoopData] = useState<EventCoop[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
   const [userLocalStorage, setUserLocalStorage] = useState<User | null>(null);
@@ -106,7 +79,7 @@ const StudentsData: React.FC = () => {
   const [page, setPage] = useState<number>(1);
   const [limit] = useState<number>(10);
   const [totalPages, setTotalPages] = useState<number>(0);
-  const [countStudents, setCountStudents] = useState<number>(0);
+  const [countTeacher, setCountTeacher] = useState<number>(0);
 
   const [firstName, setFirstName] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
@@ -128,7 +101,7 @@ const StudentsData: React.FC = () => {
         const fetchData = async () => {
           try {
             const response = await axios.get(
-              `http://localhost:3001/students/success?page=${page}&limit=${limit}`,
+              `http://localhost:3001/teacher/success?page=${page}&limit=${limit}`,
               { withCredentials: true }
             );
 
@@ -138,13 +111,10 @@ const StudentsData: React.FC = () => {
                 handleLogout();
               } else {
                 setPage(response.data.page);
-                setStudentsData(response.data.studentsData);
-                setCountStudents(response.data.countStudents);
-                setTotalPages(Math.ceil(response.data.countStudents / limit));
+                setTeacherData(response.data.teacherData);
+                setCountTeacher(response.data.countTeacher);
+                setTotalPages(Math.ceil(response.data.countTeacher / limit));
                 setFacultyData(response.data.facultyData);
-                setDepartmentData(response.data.departmentData);
-                setGradeData(response.data.gradeData);
-                setEventCoopData(response.data.eventCoopData);
                 setNotification(response.data.notification);
                 setLoading(false);
               }
@@ -237,8 +207,8 @@ const StudentsData: React.FC = () => {
     return <Navigate to="/login" />;
   }
 
-  const handleStudents = () => {  
-    navigate("/studentsData");
+  const handleTeacher = () => {
+    navigate("/teacherData");
   };
   return (
     <Container maxWidth="lg">
@@ -246,8 +216,8 @@ const StudentsData: React.FC = () => {
         <Typography variant="h4" gutterBottom>
           {page}
         </Typography>
-        <Button onClick={handleStudents} color="primary" variant="contained">
-          นิสิตข้อมูลไม่ครบ
+        <Button onClick={handleTeacher} color="primary" variant="contained">
+          นิสิตอาจารย์ไม่ครบ
         </Button>
         <Table>
           <TableHead>
@@ -257,43 +227,18 @@ const StudentsData: React.FC = () => {
               <TableCell>ประเภท</TableCell>
               <TableCell>ชื่อ</TableCell>
               <TableCell>นามสกุล</TableCell>
-              <TableCell>อีเมลล์</TableCell>
-              <TableCell>ชั่วโมงซอฟแวร์</TableCell>
-              <TableCell>ชั่วโมงฮาดแวร์</TableCell>
-              <TableCell>สถานะการอบรมณ์</TableCell>
-              <TableCell>สถานะการเรียน</TableCell>
               <TableCell>คณะ</TableCell>
-              <TableCell>สาขา</TableCell>
-              <TableCell>ชั้นปี</TableCell>
-              <TableCell>เวลาสิ้นสุด</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {studentsData.map((students, index) => (
+            {teacherData.map((teacher, index) => (
               <TableRow key={index}>
-                <TableCell>{students.students_id}</TableCell>
-                <TableCell>{students.username}</TableCell>
-                <TableCell>{students.roles_name}</TableCell>
-                <TableCell>{students.first_name}</TableCell>
-                <TableCell>{students.last_name}</TableCell>
-                <TableCell>{students.email}</TableCell>
-                <TableCell>
-                  {students.soft_hours ? students.soft_hours : "0"}
-                </TableCell>
-                <TableCell>
-                  {students.hard_hours ? students.hard_hours : "0"}
-                </TableCell>
-                <TableCell>
-                  {students.risk_status ? students.risk_status : "Null"}
-                </TableCell>
-                <TableCell>{students.education_status}</TableCell>
-                <TableCell>{students.faculty_name}</TableCell>
-                <TableCell>{students.department_name}</TableCell>
-                <TableCell>{students.level}</TableCell>
-                <TableCell>
-                  {students.date ? students.date.toString() : "N/A"}
-                </TableCell>{" "}
-                {/* ตรวจสอบวันที่ก่อน */}
+                <TableCell>{teacher.teacher_id}</TableCell>
+                <TableCell>{teacher.username}</TableCell>
+                <TableCell>{teacher.roles_name}</TableCell>
+                <TableCell>{teacher.first_name}</TableCell>
+                <TableCell>{teacher.last_name}</TableCell>
+                <TableCell>{teacher.faculty_name}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -321,11 +266,11 @@ const StudentsData: React.FC = () => {
           variant="h6"
           sx={{ display: "flex", justifyContent: "center", mt: 2 }}
         >
-          จำนวนนิสิตทั้งหมด: {countStudents}
+          จำนวนอาจารย์ทั้งหมด: {countTeacher}
         </Typography>
       </Box>
     </Container>
   );
 };
 
-export default StudentsData;
+export default Teacher;
