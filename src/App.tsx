@@ -16,6 +16,7 @@ import TeachersData from "./components/main/TeacherData";
 import Teachers from "./components/main/Teacher";
 import Building from "./components/main/Building";
 import Room from "./components/main/Room";
+import Food from "./components/main/Food";
 
 const App: React.FC = () => {
   return (
@@ -36,6 +37,7 @@ const App: React.FC = () => {
         <Route path="/teacherData" element={<TeachersData />} />
         <Route path="/building" element={<Building />} />
         <Route path="/room" element={<Room />} />
+        <Route path="/food" element={<Food />} />
       </Routes>
       <Footer />
     </Router>
